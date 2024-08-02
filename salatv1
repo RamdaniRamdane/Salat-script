@@ -1,0 +1,71 @@
+#!/bin/bash
+#latitude='36,6373' 
+#longitude='4,2041'
+latitude=$(echo $2) 
+longitude=$(echo $3)
+date=$(date +'%d-%m-%Y')
+apiJSON='curl -s 'http://api.aladhan.com/v1/timings/''$date'?latitude='$latitude'&longitude='$longitude'&method=5'
+prayerTimes=$( $apiJSON | jq -r '.data.timings ' )
+
+
+Fajr=$( $apiJSON | jq -r '.data.timings.Fajr' )
+Dhuhr=$( $apiJSON | jq -r '.data.timings.Dhuhr' )
+Asr=$( $apiJSON | jq -r '.data.timings.Asr' )
+Maghrib=$( $apiJSON | jq -r '.data.timings.Maghrib' )
+Isha=$( $apiJSON | jq -r '.data.timings.Isha' )
+
+
+
+# convertir les heurs en secondes
+FajrMin=$(date +%s -d "$Fajr")
+DhuhrMin=$(date +%s -d "$Dhuhr")
+AsrMin=$(date +%s -d "$Asr")
+MaghribMin=$(date +%s -d "$Maghrib")
+IshaMin=$(date +%s -d "$Isha")
+
+HourMin=$(date +%s)
+class=""
+salat=""
+if [ $HourMin -lt $((FajrMin + 900)) ]; then
+    FajrMin=$(date +%s -d "tomorrow $Fajr")
+fi
+if [ $HourMin -gt $((FajrMin + 900)) ] && [ $HourMin -le $((DhuhrMin + 900)) ]; then
+    heurP=$Dhuhr
+    salat="Dhuhr"
+elif [ $HourMin -gt $((DhuhrMin + 900)) ] && [ $HourMin -le $((AsrMin + 900)) ]; then
+    heurP=$Asr
+    salat="Asr"
+elif [ $HourMin -gt $((AsrMin + 900)) ] && [ $HourMin -le $((MaghribMin + 900)) ]; then
+    heurP=$Maghrib
+    salat="Maghrib"
+elif [ $HourMin -gt $((MaghribMin + 900)) ] && [ $HourMin -le $((IshaMin + 900)) ]; then
+    heurP=$Isha
+    salat="Isha"
+else
+    heurP=$Fajr
+    salat="Fajr"
+fi
+
+
+# Arguments
+if [ $1 == 'nextSalat' ]; then
+    echo $salat $heurP
+elif [ $1 == 'nextSalatName' ]; then
+    echo $salat
+elif [ $1 == 'allSalat' ]; then
+    echo "Fajr:     "$Fajr"
+Dhur:     "$Dhuhr "
+Asr:      "$Asr "
+Maghrib:  "$Maghrib "
+Isha:     "$Isha
+elif [ $1 == 'Fajr' ]; then
+    echo $Fajr
+elif [ $1 == 'Dhuhr' ]; then
+    echo $Dhuhr
+elif [ $1 == 'Asr' ]; then
+    echo $Asr
+elif [ $1 == 'Maghrib' ]; then
+    echo $Maghrib
+elif [ $1 == 'Isha' ]; then
+    echo $Isha
+fi
